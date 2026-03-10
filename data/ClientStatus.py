@@ -1,0 +1,5 @@
+CONNECTION_INITIAL = "Connection not initiated"
+CONNECTION_CONNECTED = "Connected successfully"
+CONNECTION_LOST = "Connection to Recettear was lost. Please restart the client and connect again"
+CONNECTION_REFUSED_GAME = "Connection to Recettear failed. Please insure Recettear is running"
+CONNECTION_DISCONNECTED = "Disconnected successfully"

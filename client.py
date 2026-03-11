@@ -4,7 +4,7 @@ from typing import Optional
 import colorama
 import Utils
 from typing import Any
-from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, get_base_parser, server_loop
+from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, server_loop
 from . import globals
 from .data import ClientStatus
 from pymem import Pymem
@@ -37,8 +37,6 @@ class RecettearContext(CommonContext):
     statsChecker = memoryChecker.stats
     timeChecker = memoryChecker.time
 
-    game_process = None
-
     def __init__(self, server_address: Optional[str] = None, password: Optional[str] = None) -> None:
         """
         Initializes the context
@@ -50,6 +48,8 @@ class RecettearContext(CommonContext):
 
         self.game_status = ClientStatus.CONNECTION_INITIAL
 
+        self.game_process = None
+        self.ap_connected = False
         self.fully_connected = False
 
     async def server_auth(self, password_requested: bool = False) -> None:
@@ -66,9 +66,23 @@ class RecettearContext(CommonContext):
 
         await self.get_username()
         await self.send_connect()
+
+        self.ap_connected = True
+
+        if self.game_process is not None:
+            self.fully_connected = True
+            self.game_status = ClientStatus.CONNECTION_CONNECTED
+            logger.info(self.game_status)
+        else:
+            self.game_status = ClientStatus.CONNECTION_AP_CONNECTION
+            logger.info(self.game_status)
         
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         await super().disconnect(allow_autoreconnect)
+        self.ap_connected = False
+        self.fully_connected = False
+        self.game_status = ClientStatus.CONNECTION_DISCONNECTED
+        logger.info(self.game_status)
 
     def on_package(self, cmd: str, args: dict[str, Any]) -> None:
         """
@@ -109,17 +123,23 @@ class RecettearContext(CommonContext):
         try:
             process = Pymem(process_name=processName)
         except ProcessNotFound:
-            self.game_status = ClientStatus.CONNECTION_REFUSED_GAME
-            logger.info("Recettear process not found. Make sure it is running")
+            self.game_status = ClientStatus.CONNECTION_GAME_REFUSED
+            logger.info(self.game_status)
             return False
         except ProcessError as e:
-            self.game_status = ClientStatus.CONNECTION_REFUSED_GAME            
+            self.game_status = ClientStatus.CONNECTION_GAME_REFUSED            
             logger.info(f"Unexpected error connecting to Recettear: {e}")
             return False
         
         self.game_process = process
-        self.game_status = ClientStatus.CONNECTION_CONNECTED
-        logger.info("Connected to Recettear")
+        
+        if self.ap_connected:
+            self.fully_connected = True
+            self.game_status = ClientStatus.CONNECTION_CONNECTED
+            logger.info(self.game_status)
+        else:
+            self.game_status = ClientStatus.CONNECTION_GAME_CONNECTION
+            logger.info(self.game_status)
         return True
         
     async def unhook_game_process(self):            
@@ -128,19 +148,12 @@ class RecettearContext(CommonContext):
         
         self.game_process.close_process()
         self.game_process = None
-        self.game_status = ClientStatus.CONNECTION_DISCONNECTED
-        logger.info("Disconnected from Recettear")
+
+        self.fully_connected = False
+        self.game_status = ClientStatus.CONNECTION_GAME_LOST
+        logger.info(self.game_status)
 
 async def game_watcher(ctx: RecettearContext):
-    logger.info("Starting connection to game.")
-    last_message = ""
-
-    def log_message(msg: str, always_log=False):
-        nonlocal last_message
-        if always_log or msg != last_message:
-            logger.info(msg)
-            last_message = msg
-
     sleep_time = 0.0
     while not ctx.exit_event.is_set():
         if sleep_time > 0.0:
@@ -156,16 +169,16 @@ async def game_watcher(ctx: RecettearContext):
 
             if game_process is None:
                 if not ctx.open_game_process():
-                    log_message("Connection to game failed, attempting again in 5 seconds...", True)
+                    logger.info("Connection to Recettear failed, attempting again in 5 seconds...")
                     sleep_time = 5
                 else:
                     # No wait, start processing items/locations/etc. immediately if the client is connected to the
                     # server.
                     pass
-            else: # Game process is assumed connected
-
-                # TODO: Need to provide a check to see if client has both game and server connection. Continue loop refusal until both conditions are met.
-
+            elif not ctx.fully_connected:
+                logger.info(ctx.game_status)
+                sleep_time = 5
+            else: # Client is fully connected to server & game. Begin processing game data and monitoring.
                 game_process.read_bytes(TEST_BYTES, 4) # Test a byte read before performing checks. Will cause an error if unable to.
 
                 new_location_names: set[str] = set()
@@ -192,7 +205,6 @@ async def game_watcher(ctx: RecettearContext):
                 msg = "Unexpected error occurred, attempting re-connection to game in 5 seconds..."
                 logger.error(traceback.format_exc())
             logger.info(msg)
-            last_message = msg
             await ctx.disconnect()
             sleep_time = 5
             continue

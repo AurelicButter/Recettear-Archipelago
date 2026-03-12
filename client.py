@@ -93,17 +93,27 @@ class RecettearContext(CommonContext):
         """
 
         if cmd == "Connected":
-            logger.info(f"Connection package received")
-            pass
+            slot_data: dict = args.get("slot_data", {})
+            gen_game_version = slot_data.get("game_version")
+            
+            if gen_game_version != globals.metadata["game_version"]:
+                self.gui_error("Incompatible seed/client version",
+                    f"The seed was generated with Recettear version {gen_game_version}\n",
+                    f"Client version is {globals.metadata['game_version']}")
+                self.disconnect()
+                return
+            
+            # TODO: Update option toggles here for location checks
         elif cmd == "ReceivedItems":
             logger.info(f"Items received package received")
+            for arg in args:
+                logger.info(f"{arg}: {args[arg]}")
             pass
         elif cmd == "Retrieved":
             logger.info(f"Retrieved package received")
+            for arg in args:
+                logger.info(f"{arg}: {args[arg]}")
             pass
-        elif cmd == "PrintJSON":
-            logger.info(f"PrintJSON package received")
-            pass 
 
         super().on_package(cmd, args)
 
@@ -172,11 +182,11 @@ async def game_watcher(ctx: RecettearContext):
                     logger.info("Connection to Recettear failed, attempting again in 5 seconds...")
                     sleep_time = 5
                 else:
-                    # No wait, start processing items/locations/etc. immediately if the client is connected to the
-                    # server.
-                    pass
+                    # Pass successful connection silently. Add 5 seconds to allow for AP connection.
+                    sleep_time = 5
             elif not ctx.fully_connected:
                 logger.info(ctx.game_status)
+                logger.info("Retrying connection in 5 seconds...")
                 sleep_time = 5
             else: # Client is fully connected to server & game. Begin processing game data and monitoring.
                 game_process.read_bytes(TEST_BYTES, 4) # Test a byte read before performing checks. Will cause an error if unable to.

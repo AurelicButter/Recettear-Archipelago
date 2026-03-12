@@ -1,6 +1,3 @@
-from collections.abc import Mapping
-from typing import Any, ClassVar
-
 from worlds.AutoWorld import World
 
 from . import items, locations, options, regions, rules, web_world, globals
@@ -17,6 +14,11 @@ class RecettearWorld(World):
     item_name_to_id = ItemID.ITEM_NAME_TO_ID
 
     origin_region_name = globals.origin_region
+
+    def fill_slot_data(self):
+        return {
+            "game_version": globals.metadata["world_version"]
+        }
 
     def create_regions(self) -> None:
         regions.create_and_connect_regions(self)

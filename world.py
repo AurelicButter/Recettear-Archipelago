@@ -17,7 +17,7 @@ class RecettearWorld(World):
 
     def fill_slot_data(self):
         return {
-            "game_version": globals.metadata["world_version"]
+            "game_version": globals.world_version
         }
 
     def create_regions(self) -> None:

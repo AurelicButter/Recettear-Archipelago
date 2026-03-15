@@ -10,9 +10,6 @@ class TimeChecker():
     current_week = 1
     current_max_date = 8
 
-    def __init__(self):
-        super().__init__()
-
     def load_current_stats(self, server_stats: dict):
         """
         Sets the last date recorded from the Archipelago server for comparison to in-game values.

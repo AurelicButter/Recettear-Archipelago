@@ -10,8 +10,8 @@ from .data import ClientStatus
 from pymem import Pymem
 from pymem.exception import ProcessNotFound, ProcessError, PymemError, WinAPIError
 import logging
-from .MemoryChecker import MemoryChecker
-from .MemoryChecker.MemoryLocations import TEST_BYTES
+from .MemoryManager import MemoryManager
+from .MemoryManager.MemoryLocations import TEST_BYTES
 from . import locations
 
 debug_logger = logging.getLogger("RecettearDebug")
@@ -29,13 +29,13 @@ class RecettearCommandProcessor(ClientCommandProcessor):
 
 class RecettearContext(CommonContext):
     command_processor = RecettearCommandProcessor
-    game = globals.game 
+    game = globals.game
     items_handling = 0b111
 
     # Memory Checkers for Locations
-    memoryChecker = MemoryChecker()
-    statsChecker = memoryChecker.stats
-    timeChecker = memoryChecker.time
+    memoryManager = MemoryManager()
+    statsChecker = memoryManager.stats
+    timeChecker = memoryManager.time
 
     def __init__(self, server_address: Optional[str] = None, password: Optional[str] = None) -> None:
         """
@@ -96,24 +96,16 @@ class RecettearContext(CommonContext):
             slot_data: dict = args.get("slot_data", {})
             gen_game_version = slot_data.get("game_version")
             
-            if gen_game_version != globals.metadata["game_version"]:
+            if gen_game_version != globals.world_version:
                 self.gui_error("Incompatible seed/client version",
                     f"The seed was generated with Recettear version {gen_game_version}\n",
-                    f"Client version is {globals.metadata['game_version']}")
+                    f"Client version is {globals.world_version}")
                 self.disconnect()
                 return
             
             # TODO: Update option toggles here for location checks
         elif cmd == "ReceivedItems":
-            logger.info(f"Items received package received")
-            for arg in args:
-                logger.info(f"{arg}: {args[arg]}")
-            pass
-        elif cmd == "Retrieved":
-            logger.info(f"Retrieved package received")
-            for arg in args:
-                logger.info(f"{arg}: {args[arg]}")
-            pass
+            self.memoryManager.received_items([item.item for item in args.get("items", [])])
 
         super().on_package(cmd, args)
 
@@ -142,6 +134,7 @@ class RecettearContext(CommonContext):
             return False
         
         self.game_process = process
+        self.memoryManager.add_game_process(process)
         
         if self.ap_connected:
             self.fully_connected = True
@@ -158,6 +151,7 @@ class RecettearContext(CommonContext):
         
         self.game_process.close_process()
         self.game_process = None
+        self.memoryManager.remove_game_process()
 
         self.fully_connected = False
         self.game_status = ClientStatus.CONNECTION_GAME_LOST
@@ -198,7 +192,7 @@ async def game_watcher(ctx: RecettearContext):
 
                 new_locations = set(locations.get_location_names_with_ids(new_location_names).values())
                 new_locations.discard(None)
-                ctx.locations_checked.update(new_location_names)
+                ctx.locations_checked.update(new_locations)
 
                 locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
                 if locations_checked:

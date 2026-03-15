@@ -8,9 +8,6 @@ class StatsChecker:
     """
     last_merchant_level = 1
 
-    def __init__(self):
-        super().__init__()
-
     def load_current_stats(self, server_stats: dict):
         """
         Sets the current stats from the Archipelago server for comparison to in-game values.

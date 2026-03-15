@@ -3,9 +3,14 @@ from typing import TYPE_CHECKING
 from BaseClasses import Item, ItemClassification
 from . import globals
 from .data import ItemClassification as DataItem, ItemID
+import logging
+
+debug_logger = logging.getLogger("RecettearDebug")
 
 if TYPE_CHECKING:
     from .world import RecettearWorld
+
+key_lookup = { v: k for k, v in ItemID.ITEM_NAME_TO_ID.items() }
 
 class RecettearItem(Item):
     game = globals.game
@@ -14,6 +19,16 @@ def get_random_filler_item_name(world: RecettearWorld) -> str:
     filler_items = [item_name for item_name, classification in DataItem.DEFAULT_ITEM_CLASSIFICATION.items() if classification == ItemClassification.filler]
     
     return world.random.choice(filler_items)
+
+def lookup_item_name_with_id(item_id: int) -> dict[str, str] | None:
+    try:
+        return {
+            "name": key_lookup.get(item_id),
+            "classification": DataItem.DEFAULT_ITEM_CLASSIFICATION[key_lookup.get(item_id)]
+        }
+    except KeyError:
+        debug_logger.error(f"Item with ID {item_id} not found in mapping. Continuing with no item given, please report this issue.")
+        return None
 
 def create_item_with_correct_classification(world: RecettearWorld, name: str) -> RecettearItem:
     classification = DataItem.DEFAULT_ITEM_CLASSIFICATION[name]

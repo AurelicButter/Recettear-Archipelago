@@ -1,8 +1,9 @@
 import json
 from pkgutil import get_data
 
-metadata = json.loads(get_data("worlds.recettear", "archipelago.json"))
+__metadata = json.loads(get_data("worlds.recettear", "archipelago.json"))
 
-game = "Recettear: An Item Shop's Tale"
-filler_item = "Dreams of Sweets"
+game = __metadata["game"]
+world_version = __metadata["world_version"]
+minimum_ap_version = __metadata["minimum_ap_version"]
 origin_region = "Week 1"

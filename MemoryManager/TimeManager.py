@@ -3,7 +3,7 @@ import math
 
 from . import MemoryLocations as Memory
 
-class TimeChecker():
+class TimeManager():
     """
     Compares memory values to various time-related statistics in-game and enables location checks if conditions are met.
     """

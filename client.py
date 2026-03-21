@@ -31,11 +31,11 @@ class RecettearContext(CommonContext):
     command_processor = RecettearCommandProcessor
     game = globals.game
     items_handling = 0b111
+    memManager = MemoryManager()
 
-    # Memory Checkers for Locations
-    memoryManager = MemoryManager()
-    statsChecker = memoryManager.stats
-    timeChecker = memoryManager.time
+    # Temp cache for retrieved items
+    has_datastore = False
+    temp_retrieved = []    
 
     def __init__(self, server_address: Optional[str] = None, password: Optional[str] = None) -> None:
         """
@@ -84,6 +84,30 @@ class RecettearContext(CommonContext):
         self.game_status = ClientStatus.CONNECTION_DISCONNECTED
         logger.info(self.game_status)
 
+    def update_storage_keys(self, item_updates: dict[str, int]):
+        """
+        Updates the data storage keys with a given value
+
+        :param item_updates: A key, value dictionary containing keys to update with the values to add
+        """
+
+        update_items = []
+        for key, value in item_updates.items():
+            update_items.append({ "key": key, "value": value, "operation": "add" })
+
+        if len(update_items) > 0:
+            msg_set = []
+
+            for pair in update_items:
+                msg_set.append({
+                    "cmd": "Set",
+                    "key": pair["key"],
+                    "want_reply": False,
+                    "operations": [{ "operation": pair["operation"], "value": pair["value"]}]
+                })
+
+            asyncio.create_task(self.send_msgs(msg_set))
+
     def on_package(self, cmd: str, args: dict[str, Any]) -> None:
         """
         Handle incoming packages from the server.
@@ -103,9 +127,31 @@ class RecettearContext(CommonContext):
                 self.disconnect()
                 return
             
+            self.set_notify("accquired_pixs", "accquired_exp")
+            
             # TODO: Update option toggles here for location checks
         elif cmd == "ReceivedItems":
-            self.memoryManager.received_items([item.item for item in args.get("items", [])])
+            if self.has_datastore == False:
+                self.temp_retrieved = self.temp_retrieved.extend([item.item for item in args.get("items", [])])
+                return
+
+            storage_updates = self.memManager.received_items([item.item for item in args.get("items", [])])
+            self.update_storage_keys(storage_updates)
+        elif cmd == "Retrieved":
+            notify_res = self.stored_data.get("accquired_exp")
+
+            if notify_res != None: # Data store has presence of tracking
+                self.memManager.update_item_tracking(self.stored_data)
+                storage_updates = self.memManager.received_items(self.temp_retrieved)
+                self.update_storage_keys(storage_updates)
+            else: # New slot, update values to integers for tracking
+                self.update_storage_keys([
+                    { "key": "accquired_pixs", "value": 0, "operation": "replace" },
+                    { "key": "accquired_exp", "value": 0, "operation": "replace" }
+                ])
+
+            self.has_datastore = True
+            self.temp_retrieved = []  
 
         super().on_package(cmd, args)
 
@@ -134,7 +180,7 @@ class RecettearContext(CommonContext):
             return False
         
         self.game_process = process
-        self.memoryManager.add_game_process(process)
+        self.memManager.add_game_process(process)
         
         if self.ap_connected:
             self.fully_connected = True
@@ -151,7 +197,7 @@ class RecettearContext(CommonContext):
         
         self.game_process.close_process()
         self.game_process = None
-        self.memoryManager.remove_game_process()
+        self.memManager.remove_game_process()
 
         self.fully_connected = False
         self.game_status = ClientStatus.CONNECTION_GAME_LOST
@@ -177,7 +223,7 @@ async def game_watcher(ctx: RecettearContext):
                     sleep_time = 5
                 else:
                     # Pass successful connection silently. Add 5 seconds to allow for AP connection.
-                    sleep_time = 5
+                    sleep_time = 10
             elif not ctx.fully_connected:
                 logger.info(ctx.game_status)
                 logger.info("Retrying connection in 5 seconds...")
@@ -187,8 +233,8 @@ async def game_watcher(ctx: RecettearContext):
 
                 new_location_names: set[str] = set()
 
-                new_location_names.update(ctx.statsChecker.check_stats(game_process))
-                new_location_names.update(ctx.timeChecker.check_time(game_process))
+                new_location_names.update(ctx.memManager.stats.check_stats(game_process))
+                new_location_names.update(ctx.memManager.time.check_time(game_process))
 
                 new_locations = set(locations.get_location_names_with_ids(new_location_names).values())
                 new_locations.discard(None)

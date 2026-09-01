@@ -6,6 +6,20 @@ An [Archipelago](https://archipelago.gg) implementation for [Recettear: An Item 
 
 Recettear Archipelago is provided as an all-in-one APWorld/Client. Install the APWorld as normally done for custom worlds. Then launch the `Recettear: An Item Shop's Tale Client` in the AP Launcher.
 
+## Player Setup
+
+Requirements:
+- A legal copy of [Recettear: An Item Shop's Tale](https://store.steampowered.com/app/70400/Recettear_An_Item_Shops_Tale/) through Steam (on latest version)
+
+To setup and connect to the multiworld:
+
+1. Install the client with the instructions from [Installation](#installation)
+2. Start Recettear: An Item Shop's Tale 
+3. Load into a game file (either a new game or save file)
+4. Start the AP client, Recettear: An Item Shop's Tale Client from the AP launcher
+5. Provide AP connection details
+6. If successfully, the client should print out `Ready! Connected to both Recettear and Archipelago.`
+
 ## Support 
 
 Found a bug? Or having trouble with something? You can either open an issue here on this GitHub repository [here](https://github.com/AurelicButter/Recettear-Archipelago/issues/new) or ask in the [Recettear thread](https://discord.com/channels/731205301247803413/1434321415921860768) on the Archipelago server.
@@ -43,10 +57,11 @@ In addition, these repositories helped determine the route to take as well as pr
 
 Our current AI usage is as followed:
 - Is not vibe-coded
-- Does not contain AI art
-- LLMs have no input or contribution to design, code, or documentation
-- AI usage is limited to conversational, Google-like search, Intellisense-like suggestions, etc...
+- Does not contain generated contributions (ie: art, code, documentation)
+- No ideas or features generated from LLMs
 
-Contributions to the codebase will be scrutinized based on these standards to the best of our ability. The Recettear Archipelago mod will not accept any contributions that do not pass a "smell" test for untested, haphazardous, and/or low effort requests.
+The only acceptable usage is in conversational Google-like searching, Intellisense-like suggestions, and/or other auto complete/suggestion/research tools. Contributors are not forced to use these tools but must use best judgement on the validity of their information.
+
+Contributions to the codebase will be scrutinized based on these standards to the best of our abilities. The Recettear Archipelago mod will not accept any contributions that do not pass a "smell" test for untested, haphazardous, and/or low effort requests.
 
 ![Professionals have standards](https://i.imgflip.com/4yzt6y.png "Professionals have standards")

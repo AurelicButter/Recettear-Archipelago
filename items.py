@@ -36,14 +36,22 @@ def create_item_with_correct_classification(world: RecettearWorld, name: str) ->
     return RecettearItem(name, classification, ItemID.ITEM_NAME_TO_ID[name], world.player)
 
 def create_all_items(world: RecettearWorld) -> None:
-    itempool: list[Item] = [
-        world.create_item("Terme Finance Approval (Week 2)"),
-        world.create_item("Terme Finance Approval (Week 3)"),
-        world.create_item("Terme Finance Approval (Week 4)"),
-        world.create_item("Terme Finance Approval (Week 5)")
-    ]
+    itempool: list[Item] = []
 
-    # itempool.extend([])
+    if world.options.progressive_finance_approval.option_true:
+        itempool.extend([
+            world.create_item("Progressive Finance Approval"),
+            world.create_item("Progressive Finance Approval"),
+            world.create_item("Progressive Finance Approval"),
+            world.create_item("Progressive Finance Approval")
+        ])
+    else:
+        itempool.extend([
+            world.create_item("Terme Finance Approval (Week 2)"),
+            world.create_item("Terme Finance Approval (Week 3)"),
+            world.create_item("Terme Finance Approval (Week 4)"),
+            world.create_item("Terme Finance Approval (Week 5)")
+        ])
 
     number_of_items = len(itempool)
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))

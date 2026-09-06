@@ -5,18 +5,14 @@ import colorama
 import Utils
 from typing import Any
 from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, server_loop
-from . import globals
-from .data import ClientStatus
-from pymem import Pymem
+from .. import globals
+from .constants import ClientStatus
 from pymem.exception import ProcessNotFound, ProcessError, PymemError, WinAPIError
 import logging
 from .MemoryManager import MemoryManager
-from .MemoryManager.MemoryLocations import TEST_BYTES
-from . import locations
+from .RecettearProcess import RecettearProcess
 
 debug_logger = logging.getLogger("RecettearDebug")
-
-processName = "recettear"
 
 class RecettearCommandProcessor(ClientCommandProcessor):
     def __init__(self, ctx: CommonContext):
@@ -32,6 +28,7 @@ class RecettearContext(CommonContext):
     game = globals.game
     items_handling = 0b111
     memManager = MemoryManager()
+    game_process: RecettearProcess = RecettearProcess()
 
     # Temp cache for retrieved items
     has_datastore = False
@@ -47,8 +44,6 @@ class RecettearContext(CommonContext):
         super().__init__(server_address, password)
 
         self.game_status = ClientStatus.CONNECTION_INITIAL
-
-        self.game_process = None
         self.ap_connected = False
         self.fully_connected = False
 
@@ -69,7 +64,7 @@ class RecettearContext(CommonContext):
 
         self.ap_connected = True
 
-        if self.game_process is not None:
+        if self.game_process.has_process():
             self.fully_connected = True
             self.game_status = ClientStatus.CONNECTION_CONNECTED
             logger.info(self.game_status)
@@ -84,16 +79,17 @@ class RecettearContext(CommonContext):
         self.game_status = ClientStatus.CONNECTION_DISCONNECTED
         logger.info(self.game_status)
 
-    def update_storage_keys(self, item_updates: dict[str, int]):
+    def update_storage_keys(self, item_updates: dict[str, int], operation="add"):
         """
         Updates the data storage keys with a given value
 
         :param item_updates: A key, value dictionary containing keys to update with the values to add
+        :param operation: The operation to use on all provided item updates. Defaults to add
         """
 
         update_items = []
         for key, value in item_updates.items():
-            update_items.append({ "key": key, "value": value, "operation": "add" })
+            update_items.append({ "key": key, "value": value, "operation": operation })
 
         if len(update_items) > 0:
             msg_set = []
@@ -145,10 +141,10 @@ class RecettearContext(CommonContext):
                 storage_updates = self.memManager.received_items(self.temp_retrieved)
                 self.update_storage_keys(storage_updates)
             else: # New slot, update values to integers for tracking
-                self.update_storage_keys([
-                    { "key": "accquired_pixs", "value": 0, "operation": "replace" },
-                    { "key": "accquired_exp", "value": 0, "operation": "replace" }
-                ])
+                self.update_storage_keys({
+                    "accquired_pixs": 0,
+                    "accquired_exp": 0
+                }, "replace")
 
             self.has_datastore = True
             self.temp_retrieved = []  
@@ -169,7 +165,7 @@ class RecettearContext(CommonContext):
 
     def open_game_process(self):
         try:
-            process = Pymem(process_name=processName)
+            self.game_process.open_process()
         except ProcessNotFound:
             self.game_status = ClientStatus.CONNECTION_GAME_REFUSED
             logger.info(self.game_status)
@@ -179,8 +175,7 @@ class RecettearContext(CommonContext):
             logger.info(f"Unexpected error connecting to Recettear: {e}")
             return False
         
-        self.game_process = process
-        self.memManager.add_game_process(process)
+        self.memManager.add_game_process(self.game_process)
         
         if self.ap_connected:
             self.fully_connected = True
@@ -196,7 +191,6 @@ class RecettearContext(CommonContext):
             return
         
         self.game_process.close_process()
-        self.game_process = None
         self.memManager.remove_game_process()
 
         self.fully_connected = False
@@ -229,16 +223,8 @@ async def game_watcher(ctx: RecettearContext):
                 logger.info("Retrying connection in 5 seconds...")
                 sleep_time = 5
             else: # Client is fully connected to server & game. Begin processing game data and monitoring.
-                game_process.read_bytes(TEST_BYTES, 4) # Test a byte read before performing checks. Will cause an error if unable to.
-
-                new_location_names: set[str] = set()
-
-                new_location_names.update(ctx.memManager.stats.check_stats(game_process))
-                new_location_names.update(ctx.memManager.time.check_time(game_process))
-
-                new_locations = set(locations.get_location_names_with_ids(new_location_names).values())
-                new_locations.discard(None)
-                ctx.locations_checked.update(new_locations)
+                location_ids = ctx.memManager.search_locations()
+                ctx.locations_checked.update(location_ids)
 
                 locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
                 if locations_checked:

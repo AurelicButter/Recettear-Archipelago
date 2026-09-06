@@ -9,6 +9,7 @@ Recettear Archipelago is provided as an all-in-one APWorld/Client. Install the A
 ## Player Setup
 
 Requirements:
+- Windows OS
 - Archipelago 0.6.7+
 - A legal copy of [Recettear: An Item Shop's Tale](https://store.steampowered.com/app/70400/Recettear_An_Item_Shops_Tale/) through Steam (on latest version)
 

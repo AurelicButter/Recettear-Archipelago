@@ -165,7 +165,7 @@ class RecettearContext(CommonContext):
 
     def open_game_process(self):
         try:
-            self.game_process.open_process()
+            self.game_process = RecettearProcess()
         except ProcessNotFound:
             self.game_status = ClientStatus.CONNECTION_GAME_REFUSED
             logger.info(self.game_status)

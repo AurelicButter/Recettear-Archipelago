@@ -49,7 +49,7 @@ class MemoryManager():
             "accquired_exp": 0
         }
 
-        if self.__process.has_process():
+        if not self.__process.has_process():
             logger.warning("Game process not available. Cannot handle received items.")
             return
 

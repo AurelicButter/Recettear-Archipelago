@@ -13,7 +13,7 @@ def check_current_date(process: RecettearProcess, dataStore: RecettearStore) -> 
 
     if current_date == dataStore.current_max_date:
         process.write_int(Memory.DATE_TIME, 4, current_date - 1)
-        return
+        return set()
 
     # All current dates need to be offset by 1 as Day 1 is the tutorial
     # Day 2 is the start of Week 1 for the player

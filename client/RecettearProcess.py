@@ -2,25 +2,21 @@ from pymem import Pymem
 
 processName = "recettear"
 
-class RecettearProcess():
+class RecettearProcess(Pymem):
     """
     A helper class to provide standard interactions around the Recettear game process
     """
     __process: Pymem = None
 
-    def open_process(self) -> None:
-        """
-        Attaches the RecettearProcess class to an existing Recettear process.
-
-        Will trigger the same exceptions as a Pymem process would.
-        """
-        self.__process = super(process_name=processName)
+    def __init__(self) -> None:
+        super().__init__(process_name=processName)
+        self.__process = self
         
     def close_process(self):
         """
         Closes connection to the attached Recettear process.
         """
-        self.__process.close_process()
+        super().close_process()
         self.__process = None
 
     def has_process(self) -> bool:
@@ -36,7 +32,7 @@ class RecettearProcess():
         :param location: The memory address of the value
         :param byte_amt: The length of bytes to read from, starting with the given location.
         """
-        return self.__process.read_bytes(location, byte_amt)
+        return super().read_bytes(location, byte_amt)
 
     def read_int(self, location, byte_amt) -> int:
         """
@@ -45,7 +41,7 @@ class RecettearProcess():
         :param location: The memory address of the value
         :param byte_amt: The length of bytes to read from, starting with the given location.
         """
-        return int.from_bytes(self.__process.read_bytes(location, byte_amt), byteorder='little')
+        return int.from_bytes(super().read_bytes(location, byte_amt), byteorder='little')
     
     def write_int(self, location, byte_amt, value: int) -> None:
         """
@@ -55,4 +51,4 @@ class RecettearProcess():
         :param byte_amt: The length of bytes to write into, starting with the given location
         :param value: The value to update the location with (ie: 1, 128, etc...)
         """
-        self.__process.write_bytes(location, value.to_bytes(byte_amt, byteorder='little'), byte_amt)
+        super().write_bytes(location, value.to_bytes(byte_amt, byteorder='little'), byte_amt)

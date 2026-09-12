@@ -7,11 +7,20 @@ from .data import LocationID
 if TYPE_CHECKING:
     from .world import RecettearWorld
 
+inverted_dict = {v:k for k,v in LocationID.LOCATION_NAME_TO_ID.items()}
 class RecettearLocation(Location):
     game = globals.game
 
 def get_location_names_with_ids(location_name: list[str]) -> dict[str, int | None]:
     return { location_name: LocationID.LOCATION_NAME_TO_ID[location_name] for location_name in location_name }
+
+def get_location_from_id(location_id: int) -> str:
+    """
+    Retrieve a location's name from its provided ID
+
+    :param location_id: The mapped ID of the location
+    """
+    return inverted_dict[location_id]
 
 def create_all_locations(world: RecettearWorld) -> None:
     create_regular_locations(world)

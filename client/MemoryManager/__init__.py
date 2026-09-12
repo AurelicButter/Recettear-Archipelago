@@ -86,6 +86,10 @@ class MemoryManager():
 
         return {k: v for k, v in storage_value_updates.items() if v > 0}
 
+    def set_location_checks(self, location_ids: list[int]) -> None:
+        for location_id in location_ids:
+            self.__dataStore.recettear_store.update_state(location_id)
+
     def search_locations(self) -> set[str]:
         """
         Function to call all watchers to search and discover new updates to prepare to send

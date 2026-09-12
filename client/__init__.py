@@ -28,7 +28,7 @@ class RecettearContext(CommonContext):
     game = globals.game
     items_handling = 0b111
     memManager = MemoryManager()
-    game_process: RecettearProcess = RecettearProcess()
+    game_process: RecettearProcess | None = None
 
     # Temp cache for retrieved items
     has_datastore = False
@@ -122,10 +122,10 @@ class RecettearContext(CommonContext):
                     f"Client version is {globals.world_version}")
                 self.disconnect()
                 return
+
+            self.memManager.set_location_checks(self.checked_locations)
             
             self.set_notify("accquired_pixs", "accquired_exp")
-            
-            # TODO: Update option toggles here for location checks
         elif cmd == "ReceivedItems":
             if self.has_datastore == False:
                 self.temp_retrieved = self.temp_retrieved.extend([item.item for item in args.get("items", [])])
@@ -209,9 +209,7 @@ async def game_watcher(ctx: RecettearContext):
             ctx.watcher_event.clear()
 
         try:
-            game_process = ctx.game_process
-
-            if game_process is None:
+            if ctx.game_process is None:
                 if not ctx.open_game_process():
                     logger.info("Connection to Recettear failed, attempting again in 5 seconds...")
                     sleep_time = 5

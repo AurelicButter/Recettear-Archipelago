@@ -2,9 +2,12 @@ from ...locations import get_location_from_id
 
 class RecettearStore:
     """ Data class dedicated to storing player progression in Recettear """
-    last_merchant_level: int = 0
-    current_max_date: int = 8
-    loans_paid: int = 0
+    last_merchant_level: int
+    loans_paid: int
+
+    def __init__(self) -> None:
+        self.last_merchant_level = 0
+        self.loans_paid = 0        
 
     def update_state(self, location_id: int) -> None:
         try:

@@ -27,7 +27,7 @@ class RecettearContext(CommonContext):
     command_processor = RecettearCommandProcessor
     game = globals.game
     items_handling = 0b111
-    memManager = MemoryManager()
+    memManager: MemoryManager | None = None
     game_process: RecettearProcess | None = None
 
     # Temp cache for retrieved items
@@ -123,6 +123,7 @@ class RecettearContext(CommonContext):
                 self.disconnect()
                 return
 
+            self.memManager = MemoryManager()
             self.memManager.set_location_checks(self.checked_locations)
             
             self.set_notify("accquired_pixs", "accquired_exp")

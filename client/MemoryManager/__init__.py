@@ -13,7 +13,7 @@ from ... import locations
 debug_logger = logging.getLogger("RecettearDebug")
 
 class MemoryManager():
-    __process: RecettearProcess
+    __process: RecettearProcess | None = None
     __dataStore: DataStore
 
     # Item tracking to avoid duplicating item retrieval
@@ -21,7 +21,6 @@ class MemoryManager():
     __accquired_exp = 0
 
     def __init__(self):
-        self.__process = RecettearProcess() 
         self.__dataStore = DataStore()     
 
     def update_item_tracking(self, stored_data: dict[str, any]):
@@ -49,7 +48,7 @@ class MemoryManager():
             "accquired_exp": 0
         }
 
-        if not self.__process.has_process():
+        if self.__process is None or not self.__process.has_process():
             logger.warning("Game process not available. Cannot handle received items.")
             return
 
@@ -101,7 +100,7 @@ class MemoryManager():
         location_updates: set[str] = set()
 
         location_updates.update(PlayerWatcher.check_merchant_level(self.__process, self.__dataStore.recettear_store))
-        location_updates.update(TimeWatcher.check_current_date(self.__process, self.__dataStore.recettear_store))
+        location_updates.update(TimeWatcher.check_current_date(self.__process, self.__dataStore))
 
         location_ids = set(locations.get_location_names_with_ids(location_updates).values())
         location_ids.discard(None)

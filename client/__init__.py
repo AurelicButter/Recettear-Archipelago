@@ -63,21 +63,12 @@ class RecettearContext(CommonContext):
         await self.send_connect()
 
         self.ap_connected = True
-
-        if self.game_process.has_process():
-            self.fully_connected = True
-            self.game_status = ClientStatus.CONNECTION_CONNECTED
-            logger.info(self.game_status)
-        else:
-            self.game_status = ClientStatus.CONNECTION_AP_CONNECTION
-            logger.info(self.game_status)
+        self.set_client_status()
         
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         await super().disconnect(allow_autoreconnect)
         self.ap_connected = False
-        self.fully_connected = False
-        self.game_status = ClientStatus.CONNECTION_DISCONNECTED
-        logger.info(self.game_status)
+        self.set_client_status(disconnect=True)
 
     def update_storage_keys(self, item_updates: dict[str, int], operation="add"):
         """
@@ -114,12 +105,13 @@ class RecettearContext(CommonContext):
 
         if cmd == "Connected":
             slot_data: dict = args.get("slot_data", {})
-            gen_game_version = slot_data.get("game_version")
+            gen_game_version: str = slot_data.get("game_version")
             
-            if gen_game_version != globals.world_version:
-                self.gui_error("Incompatible seed/client version",
-                    f"The seed was generated with Recettear version {gen_game_version}\n",
-                    f"Client version is {globals.world_version}")
+            if gen_game_version[:gen_game_version.rfind(".")] != globals.world_version[:globals.world_version.rfind(".")]:
+                self.gui_error("Incompatible Client Version",
+                    f"This slot was generated with RecettearAP version {gen_game_version} and " +
+                    f"is only compatible with ~{gen_game_version[:gen_game_version.rfind(".")] + ".X"} versions. " +
+                    f"This client's version is {globals.world_version} which is not allowed.")
                 self.disconnect()
                 return
 
@@ -139,8 +131,9 @@ class RecettearContext(CommonContext):
 
             if notify_res != None: # Data store has presence of tracking
                 self.memManager.update_item_tracking(self.stored_data)
-                storage_updates = self.memManager.received_items(self.temp_retrieved)
-                self.update_storage_keys(storage_updates)
+                # Commented out for replacement in later commit.
+                # storage_updates = self.memManager.received_items(self.temp_retrieved)
+                # self.update_storage_keys(storage_updates)
             else: # New slot, update values to integers for tracking
                 self.update_storage_keys({
                     "accquired_pixs": 0,
@@ -164,7 +157,26 @@ class RecettearContext(CommonContext):
         self.ui = RecettearManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
-    def open_game_process(self):
+    def set_client_status(self, disconnect=False, process_lost=False) -> None: 
+        self.fully_connected = False
+
+        if disconnect:
+            self.game_status = ClientStatus.CONNECTION_DISCONNECTED
+        elif process_lost:
+            self.game_status = ClientStatus.CONNECTION_GAME_LOST
+        elif self.ap_connected and self.game_process is not None:
+            self.game_status = ClientStatus.CONNECTION_CONNECTED
+            self.fully_connected = True
+        elif self.ap_connected:
+            self.game_status = ClientStatus.CONNECTION_AP_CONNECTION
+        elif self.game_process is not None:
+            self.game_status = ClientStatus.CONNECTION_GAME_CONNECTION
+        else:
+            self.game_status = ClientStatus.CONNECTION_GAME_LOST
+
+        logger.info(self.game_status)
+
+    def open_game_process(self) -> bool:
         try:
             self.game_process = RecettearProcess()
         except ProcessNotFound:
@@ -177,14 +189,8 @@ class RecettearContext(CommonContext):
             return False
         
         self.memManager.add_game_process(self.game_process)
-        
-        if self.ap_connected:
-            self.fully_connected = True
-            self.game_status = ClientStatus.CONNECTION_CONNECTED
-            logger.info(self.game_status)
-        else:
-            self.game_status = ClientStatus.CONNECTION_GAME_CONNECTION
-            logger.info(self.game_status)
+
+        self.set_client_status()
         return True
         
     async def unhook_game_process(self):            
@@ -194,9 +200,7 @@ class RecettearContext(CommonContext):
         self.game_process.close_process()
         self.memManager.remove_game_process()
 
-        self.fully_connected = False
-        self.game_status = ClientStatus.CONNECTION_GAME_LOST
-        logger.info(self.game_status)
+        self.set_client_status(process_lost=True)
 
 async def game_watcher(ctx: RecettearContext):
     sleep_time = 0.0

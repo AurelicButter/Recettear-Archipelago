@@ -1,5 +1,6 @@
 from .bases import RecettearTestBase
 from ..client.DataStore.RecettearStore import RecettearStore
+from ..data.LocationID import LOCATION_NAME_TO_ID
 
 class TestDatastoreRecettear(RecettearTestBase):
     def test_valid_location_id_update(self) -> None:
@@ -8,9 +9,9 @@ class TestDatastoreRecettear(RecettearTestBase):
         """
         store = RecettearStore()
 
-        store.update_state(105)
+        store.update_state(LOCATION_NAME_TO_ID["Merchant Level 7"])
 
-        self.assertTrue(store.last_merchant_level == 7, f"Store failed to update the location with ID: {105}")
+        self.assertTrue(store.last_merchant_level == 7, f"Store failed to update the location with ID: {LOCATION_NAME_TO_ID["Merchant Level 7"]}")
 
     def test_invalid_location_id_update(self) -> None:
         """

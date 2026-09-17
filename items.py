@@ -23,6 +23,7 @@ def get_random_filler_item_name(world: RecettearWorld) -> str:
 def lookup_item_name_with_id(item_id: int) -> dict[str, str] | None:
     try:
         return {
+            "id": item_id,
             "name": key_lookup.get(item_id),
             "classification": DataItem.DEFAULT_ITEM_CLASSIFICATION[key_lookup.get(item_id)]
         }

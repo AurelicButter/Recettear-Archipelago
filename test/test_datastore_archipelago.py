@@ -1,7 +1,7 @@
-from .bases import RecettearTestBase
+import unittest
 from ..client.DataStore.ArchipelagoStore import ArchipelagoStore
 
-class TestDatastoreArchipelago(RecettearTestBase):
+class TestDatastoreArchipelago(unittest.TestCase):
     def test_valid_progressive_week_update(self) -> None:
         """
         Verify that the store can correctly update the weeks counter accurately

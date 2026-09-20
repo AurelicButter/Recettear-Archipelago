@@ -1,8 +1,8 @@
-from .bases import RecettearTestBase
+import unittest
 from ..client.DataStore.RecettearStore import RecettearStore
 from ..data.LocationID import LOCATION_NAME_TO_ID
 
-class TestDatastoreRecettear(RecettearTestBase):
+class TestDatastoreRecettear(unittest.TestCase):
     def test_valid_location_id_update(self) -> None:
         """
         Verify that the store can correctly update a store value based on the location ID

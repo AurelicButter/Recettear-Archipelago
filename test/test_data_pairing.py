@@ -1,7 +1,7 @@
-from .bases import RecettearTestBase
+import unittest
 from ..data import ItemClassification, ItemID
 
-class TestDataPairing(RecettearTestBase):
+class TestDataPairing(unittest.TestCase):
     def test_no_stray_item_classification(self) -> None:
         """
         Verify that all provided item classifications map to an item ID

@@ -6,24 +6,9 @@ class RecettearProcess(Pymem):
     """
     A helper class to provide standard interactions around the Recettear game process
     """
-    __process: Pymem = None
 
     def __init__(self) -> None:
         super().__init__(process_name=processName)
-        self.__process = self
-        
-    def close_process(self):
-        """
-        Closes connection to the attached Recettear process.
-        """
-        super().close_process()
-        self.__process = None
-
-    def has_process(self) -> bool:
-        """
-        Returns true if a Recettear process is attached
-        """
-        return self.__process is not None
 
     def read_bytes(self, location, byte_amt) -> int:
         """

@@ -24,15 +24,14 @@ class RecettearCommandProcessor(ClientCommandProcessor):
             logger.info(f"Recettear status: {self.ctx.game_status}")
 
 class RecettearContext(CommonContext):
+    __ready: bool = False
+    __held_item_ids: list[int] = []
+
     command_processor = RecettearCommandProcessor
     game = globals.game
     items_handling = 0b111
     memManager: MemoryManager | None = None
     game_process: RecettearProcess | None = None
-
-    # Temp cache for retrieved items
-    has_datastore = False
-    temp_retrieved = []    
 
     def __init__(self, server_address: Optional[str] = None, password: Optional[str] = None) -> None:
         """
@@ -46,6 +45,7 @@ class RecettearContext(CommonContext):
         self.game_status = ClientStatus.CONNECTION_INITIAL
         self.ap_connected = False
         self.fully_connected = False
+        self.memManager = MemoryManager()
 
     async def server_auth(self, password_requested: bool = False) -> None:
         """
@@ -67,7 +67,6 @@ class RecettearContext(CommonContext):
         
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         await super().disconnect(allow_autoreconnect)
-        self.ap_connected = False
         self.set_client_status(disconnect=True)
 
     def update_storage_keys(self, item_updates: dict[str, int], operation="add"):
@@ -115,33 +114,29 @@ class RecettearContext(CommonContext):
                 self.disconnect()
                 return
 
-            self.memManager = MemoryManager()
             self.memManager.set_location_checks(self.checked_locations)
             
-            self.set_notify("accquired_pixs", "accquired_exp")
+            self.set_notify("last_check_received")
         elif cmd == "ReceivedItems":
-            if self.has_datastore == False:
-                self.temp_retrieved = self.temp_retrieved.extend([item.item for item in args.get("items", [])])
-                return
-
-            storage_updates = self.memManager.received_items([item.item for item in args.get("items", [])])
-            self.update_storage_keys(storage_updates)
+            if self.__ready is False:
+                self.__held_item_ids.extend([item.item for item in args.get("items", [])])
+            else:
+                storage_updates = self.memManager.received_items([item.item for item in args.get("items", [])])
+                self.update_storage_keys(storage_updates)            
         elif cmd == "Retrieved":
-            notify_res = self.stored_data.get("accquired_exp")
+            if self.__ready is False:
+                keys: dict[str, any] = args.get("keys")
 
-            if notify_res != None: # Data store has presence of tracking
-                self.memManager.update_item_tracking(self.stored_data)
-                # Commented out for replacement in later commit.
-                # storage_updates = self.memManager.received_items(self.temp_retrieved)
-                # self.update_storage_keys(storage_updates)
-            else: # New slot, update values to integers for tracking
-                self.update_storage_keys({
-                    "accquired_pixs": 0,
-                    "accquired_exp": 0
-                }, "replace")
+                if "last_check_received" in keys:
+                    if keys.get("last_check_received"):
+                        self.memManager.update_item_tracking(keys)
+                    else:
+                        self.update_storage_keys({ "last_check_received": -1 }, "replace")
 
-            self.has_datastore = True
-            self.temp_retrieved = []  
+                    storage_updates = self.memManager.received_items(self.__held_item_ids)
+                    self.update_storage_keys(storage_updates)
+                    self.__held_item_ids.clear()
+                    self.__ready = True
 
         super().on_package(cmd, args)
 
@@ -161,6 +156,7 @@ class RecettearContext(CommonContext):
         self.fully_connected = False
 
         if disconnect:
+            self.ap_connected = False
             self.game_status = ClientStatus.CONNECTION_DISCONNECTED
         elif process_lost:
             self.game_status = ClientStatus.CONNECTION_GAME_LOST
@@ -187,17 +183,16 @@ class RecettearContext(CommonContext):
             self.game_status = ClientStatus.CONNECTION_GAME_REFUSED            
             logger.info(f"Unexpected error connecting to Recettear: {e}")
             return False
-        
+
         self.memManager.add_game_process(self.game_process)
 
         self.set_client_status()
         return True
         
     async def unhook_game_process(self):            
-        if self.game_process == None:
-            return
-        
-        self.game_process.close_process()
+        if self.game_process is not None:
+            self.game_process = self.game_process.close_process()
+
         self.memManager.remove_game_process()
 
         self.set_client_status(process_lost=True)

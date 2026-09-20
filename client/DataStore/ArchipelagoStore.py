@@ -1,7 +1,5 @@
 class ArchipelagoStore:
     """ Data class dedicated to storing Archipelago unlocks from the multiworld """
-    accquired_exp: int
-    accquired_pixs: int
     last_check_received: int
     """The integer value of the last check from the server read by the store to prevent duplicate items on connection"""
     weeks_received: bytearray
@@ -11,9 +9,7 @@ class ArchipelagoStore:
     """
 
     def __init__(self) -> None:
-        self.accquired_exp = 0
-        self.accquired_pixs = 0
-        self.last_check_received = 0
+        self.last_check_received = -1
         self.weeks_received = bytearray(4)
 
     def update_state(self, item: str) -> None:

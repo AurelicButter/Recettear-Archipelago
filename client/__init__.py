@@ -23,6 +23,13 @@ class RecettearCommandProcessor(ClientCommandProcessor):
         if isinstance(self.ctx, RecettearContext):
             logger.info(f"Recettear status: {self.ctx.game_status}")
 
+    def _cmd_resync(self):
+        """Forces a resync to receive all items again from the beginning. Triggering this is not reversable."""
+        self.ctx: RecettearContext
+
+        self.ctx.memManager.get_ap_store().last_check_received = -1
+        asyncio.create_task(self.ctx.send_msgs([{ "cmd": "Sync" }]))
+
 class RecettearContext(CommonContext):
     __ready: bool = False
     __held_item_ids: list[int] = []

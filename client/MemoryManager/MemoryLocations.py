@@ -6,7 +6,7 @@ TEST_BYTES = 0x0438B918
 #
 ############################################################
 PIX_BALANCE = 0x044E37A4
-DATE_TIME = 0x0450FB84
+DATE_TIME = 0x0450FB84 # FYI Date is zero-based
 DAY_TIME = 0x0450FB88
 EXP_TOTAL = 0x0450FB74
 EXP_DAILY = 0x0450FB78
@@ -56,3 +56,11 @@ CREP_TOWNIE_MA2_LV = 0x045109E2
 ############################################################
 SALE_ITEM_ID = 0x0730B5A4 # 4 bytes
 SALES_STREAK = 0x0730B5C4 # 4 bytes
+LOOP_COUNTER = 0x0450FB7C # 4 bytes, Integer
+
+############################################################
+#
+# Values for Events
+#
+############################################################
+LOAN_PAYMENT_DISPLAY = 0x074B2F48 # 4 bytes, Integer

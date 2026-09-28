@@ -17,7 +17,9 @@ class RecettearWorld(World):
 
     def fill_slot_data(self):
         return {
-            "game_version": globals.world_version
+            "game_version": globals.world_version,
+            "prevent_bankruptcy": self.options.prevent_bankruptcy.option_true,
+            "prevent_multi_loans": self.options.prevent_multi_loans.option_true
         }
 
     def create_regions(self) -> None:

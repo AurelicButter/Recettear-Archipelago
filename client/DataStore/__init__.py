@@ -1,5 +1,6 @@
 from .ArchipelagoStore import ArchipelagoStore
 from .RecettearStore import RecettearStore
+from .EventStore import EventStore
 
 class DataStore():
     """
@@ -8,10 +9,12 @@ class DataStore():
 
     ap_store: ArchipelagoStore
     recettear_store: RecettearStore
+    event_store: EventStore
 
     def __init__(self):
         self.ap_store = ArchipelagoStore()
         self.recettear_store = RecettearStore()
+        self.event_store = EventStore()
 
     def init_ap_values(self, stored_data: dict[str, any]):
         for k, v in stored_data.items():

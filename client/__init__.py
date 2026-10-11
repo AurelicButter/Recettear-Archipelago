@@ -121,6 +121,7 @@ class RecettearContext(CommonContext):
                 self.disconnect()
                 return
 
+            self.memManager.update_slot_data(slot_data)
             self.memManager.set_location_checks(self.checked_locations)
             
             self.set_notify("last_check_received")
@@ -135,13 +136,14 @@ class RecettearContext(CommonContext):
                 keys: dict[str, any] = args.get("keys")
 
                 if "last_check_received" in keys:
-                    if keys.get("last_check_received"):
+                    last_check = keys.get("last_check_received")
+                    if last_check not in (None, -1):
                         self.memManager.update_item_tracking(keys)
                     else:
                         self.update_storage_keys({ "last_check_received": -1 }, "replace")
 
-                    storage_updates = self.memManager.received_items(self.__held_item_ids)
-                    self.update_storage_keys(storage_updates)
+                    storage_updates = self.memManager.ready_items(self.__held_item_ids)
+                    self.update_storage_keys(storage_updates, "replace")
                     self.__held_item_ids.clear()
                     self.__ready = True
 
@@ -154,7 +156,7 @@ class RecettearContext(CommonContext):
             logging_pairs = [
                 ("Client", "Archipelago")
             ]
-            base_title = f"Archipelago {globals.game} Client"
+            base_title = f"{globals.game.replace("Tale", "Archipelago")} Client"
 
         self.ui = RecettearManager(self)
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")

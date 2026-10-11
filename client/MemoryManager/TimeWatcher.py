@@ -3,23 +3,48 @@ Watcher module dedicated to functions that monitor various memory locations
 for time-related changes in-game
 """
 
-import math
 from . import MemoryLocations as Memory
 from ..DataStore import DataStore
 from ..RecettearProcess import RecettearProcess
+from ..constants.PaymentDates import PAYMENT_DATES
 
-def check_current_date(process: RecettearProcess, dataStore: DataStore) -> set[str]:
-    current_date = process.read_int(Memory.DATE_TIME, 4)
+def review_current_date(process: RecettearProcess, dataStore: DataStore) -> None:
+    """
+    Checks the current date in-game to see if the player needs to be reverted to a
+    previous day based on unlocks.
+    """
+    current_date = process.read_int(Memory.DATE_TIME, 4) + 1 # Zero-based, 0 is Day 1
 
     if current_date == dataStore.ap_store.get_maximum_date_unlocked():
-        process.write_int(Memory.DATE_TIME, 4, current_date - 1)
-        return set()
+        process.write_int(Memory.DATE_TIME, 4, current_date - 2)
 
-    recettearStore = dataStore.recettear_store
+def loan_payment_watcher(process: RecettearProcess, dataStore: DataStore) -> set[str]:
+    """
+    Method to prevent the player from losing their pixs in the event of a loan payment
+    if they do not have the money to pay and the following week unlocked.
+    """
+    current_date = process.read_int(Memory.DATE_TIME, 4) + 1 # Zero-based, 0 is Day 1
+    current_payment_amt = process.read_int(Memory.LOAN_PAYMENT_DISPLAY, 4)
 
-    # All current dates need to be offset by 1 as Day 1 is the tutorial
-    # Day 2 is the start of Week 1 for the player
-    if math.floor((current_date - 1) / 7) > recettearStore.loans_paid:
-        recettearStore.loans_paid = recettearStore.loans_paid + 1
-        return set([f"Paid Week {recettearStore.loans_paid} Debt"])
+    if current_payment_amt > 0:
+        dataStore.event_store.payment_event = True
+
+        if dataStore.ap_store.prevent_bankruptcy:
+            dataStore.event_store.temp_values["current_pixs"] = current_payment_amt
+    elif dataStore.event_store.payment_event:
+        if current_date == 2: # Loop restart, player failed to make payment        
+            if dataStore.ap_store.prevent_multi_loans:
+                first_date = dataStore.recettear_store.loans_paid * 7 + 1
+                process.write_int(Memory.DATE_TIME, 4, first_date)
+
+            if dataStore.ap_store.prevent_bankruptcy:
+                process.write_int(Memory.PIX_BALANCE, 4, dataStore.event_store.temp_values["current_pixs"])
+            dataStore.event_store.payment_event = False
+        elif current_date in PAYMENT_DATES: # Player successfully made payment
+            payment_index = PAYMENT_DATES.index(current_date)
+
+            dataStore.recettear_store.loans_paid = dataStore.recettear_store.loans_paid + 1
+            dataStore.event_store.payment_event = False
+            return set([f"Paid Week {payment_index + 1} Debt"])
+
     return set()

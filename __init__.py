@@ -1,11 +1,12 @@
 from .world import RecettearWorld as RecettearWorld
 from worlds.LauncherComponents import Component, components, launch_subprocess
+from . import globals
 
 def launch_client() -> None:
     from .client import main
-    launch_subprocess(main, name="Recettear Client")
+    launch_subprocess(main, name=f"{globals.game.replace("Tale", "Client")}")
 
 def add_client_to_launcher() -> None:
-    components.append(Component("Recettear Client", func=launch_client))
+    components.append(Component(f"{globals.game.replace("Tale", "Client")}", func=launch_client))
 
 add_client_to_launcher()

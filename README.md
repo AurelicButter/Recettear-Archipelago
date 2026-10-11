@@ -4,7 +4,7 @@ An [Archipelago](https://archipelago.gg) implementation for [Recettear: An Item 
 
 ## Installation
 
-Recettear Archipelago is provided as an all-in-one APWorld/Client. Install the APWorld as normally done for custom worlds. Then launch the `Recettear: An Item Shop's Tale Client` in the AP Launcher.
+Recettear Archipelago is provided as an all-in-one APWorld/Client. Install the APWorld as normally done for custom worlds. Then launch the `Recettear: An Item Shop's Client` in the AP Launcher.
 
 ## Player Setup
 

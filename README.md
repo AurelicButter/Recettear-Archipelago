@@ -54,16 +54,3 @@ A special thanks to these initial articles and posts for documenting Recettear. 
 In addition, these repositories helped determine the route to take as well as provide some inner working details on how Recettear functions.
 - [(GitHub) Recemoddar](https://github.com/ribeena/Recemoddar)
 - [(GitHub) Recettear Repacker](https://github.com/UnrealPowerz/recettear-repacker)
-
-## AI Disclosure
-
-Our current AI usage is as followed:
-- Is not vibe-coded
-- Does not contain generated contributions (ie: art, code, documentation)
-- No ideas or features generated from LLMs
-
-The only acceptable usage is in conversational Google-like searching, Intellisense-like suggestions, and/or other auto complete/suggestion/research tools. Contributors are not forced to use these tools but must use best judgement on the validity of their information.
-
-Contributions to the codebase will be scrutinized based on these standards to the best of our abilities. The Recettear Archipelago mod will not accept any contributions that do not pass a "smell" test for untested, haphazardous, and/or low effort requests.
-
-![Professionals have standards](https://i.imgflip.com/4yzt6y.png "Professionals have standards")

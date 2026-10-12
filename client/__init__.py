@@ -27,6 +27,7 @@ class RecettearCommandProcessor(ClientCommandProcessor):
         """Forces a resync to receive all items again from the beginning. Triggering this is not reversable."""
         self.ctx: RecettearContext
 
+        self.ctx.memManager.reset_store()
         self.ctx.memManager.get_ap_store().last_check_received = -1
         asyncio.create_task(self.ctx.send_msgs([{ "cmd": "Sync" }]))
 

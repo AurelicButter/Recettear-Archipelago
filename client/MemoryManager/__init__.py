@@ -22,6 +22,9 @@ class MemoryManager():
     def get_ap_store(self) -> ArchipelagoStore:
         return self.__dataStore.ap_store
 
+    def reset_store(self) -> None:
+        self.__dataStore.reset_store()
+
     def get_recettear_store(self) -> RecettearStore:
         return self.__dataStore.recettear_store 
 

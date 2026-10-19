@@ -18,7 +18,7 @@ To setup and connect to the multiworld:
 1. Install the client with the instructions from [Installation](#installation)
 2. Start Recettear: An Item Shop's Tale 
 3. Load into a game file (either a new game or save file)
-4. Start the AP client, Recettear: An Item Shop's Tale Client from the AP launcher
+4. Start the AP client, Recettear: An Item Shop's Client from the AP launcher
 5. Provide AP connection details
 6. If successfully, the client should print out `Ready! Connected to both Recettear and Archipelago.`
 

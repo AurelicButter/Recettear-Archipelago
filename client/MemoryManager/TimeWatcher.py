@@ -7,6 +7,7 @@ from . import MemoryLocations as Memory
 from ..DataStore import DataStore
 from ..RecettearProcess import RecettearProcess
 from ..constants.PaymentDates import PAYMENT_DATES
+from ..constants.PaymentAmounts import PAYMENT_AMOUNT
 
 def review_current_date(process: RecettearProcess, dataStore: DataStore) -> None:
     """
@@ -32,19 +33,23 @@ def loan_payment_watcher(process: RecettearProcess, dataStore: DataStore) -> set
         if dataStore.ap_store.prevent_bankruptcy:
             dataStore.event_store.temp_values["current_pixs"] = current_payment_amt
     elif dataStore.event_store.payment_event:
-        if current_date == 2: # Loop restart, player failed to make payment        
+        # Loan payment is made. Continue as normal
+        if dataStore.event_store.temp_values["current_pixs"] in PAYMENT_AMOUNT:
+            payment_index = PAYMENT_DATES.index(current_date)
+            dataStore.recettear_store.update_loans_paid(payment_index)
+            
+            dataStore.event_store.payment_event = False
+            dataStore.event_store.temp_values["current_pixs"] = 0
+            return set([f"Paid Week {payment_index + 1} Debt"])
+        # Player failed to make a payment
+        elif current_date == 2:
             if dataStore.ap_store.prevent_multi_loans:
-                first_date = dataStore.recettear_store.loans_paid * 7 + 1
+                first_date = dataStore.recettear_store.get_loans_paid() * 7 + 1
                 process.write_int(Memory.DATE_TIME, 4, first_date)
-
+            
             if dataStore.ap_store.prevent_bankruptcy:
                 process.write_int(Memory.PIX_BALANCE, 4, dataStore.event_store.temp_values["current_pixs"])
             dataStore.event_store.payment_event = False
-        elif current_date in PAYMENT_DATES: # Player successfully made payment
-            payment_index = PAYMENT_DATES.index(current_date)
-
-            dataStore.recettear_store.loans_paid = dataStore.recettear_store.loans_paid + 1
-            dataStore.event_store.payment_event = False
-            return set([f"Paid Week {payment_index + 1} Debt"])
+            dataStore.event_store.temp_values["current_pixs"] = 0       
 
     return set()

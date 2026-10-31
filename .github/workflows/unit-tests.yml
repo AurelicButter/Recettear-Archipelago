@@ -1,5 +1,11 @@
 name: Unit Tests
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+  workflow_dispatch:
 
 env:
   ARCHIPELAGO_VERSION: '0.6.7'

@@ -35,12 +35,17 @@ def loan_payment_watcher(process: RecettearProcess, dataStore: DataStore) -> set
     elif dataStore.event_store.payment_event:
         # Loan payment is made. Continue as normal
         if dataStore.event_store.temp_values["current_pixs"] in PAYMENT_AMOUNT:
-            payment_index = PAYMENT_DATES.index(current_date)
-            dataStore.recettear_store.update_loans_paid(payment_index)
+            if current_date == 37: # Day 37 is goal date
+                dataStore.event_store.payment_event = False
+                dataStore.event_store.temp_values["current_pixs"] = 0
+                return set(["Debt Free"])
+            else:
+                payment_index = PAYMENT_DATES.index(current_date)
+                dataStore.recettear_store.update_loans_paid(payment_index)
             
-            dataStore.event_store.payment_event = False
-            dataStore.event_store.temp_values["current_pixs"] = 0
-            return set([f"Paid Week {payment_index + 1} Debt"])
+                dataStore.event_store.payment_event = False
+                dataStore.event_store.temp_values["current_pixs"] = 0
+                return set([f"Paid Week {payment_index + 1} Debt"])
         # Player failed to make a payment
         elif current_date == 2:
             if dataStore.ap_store.prevent_multi_loans:

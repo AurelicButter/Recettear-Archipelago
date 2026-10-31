@@ -24,5 +24,5 @@ class RecettearStore:
         return self.loans_paid.count(1)
 
     def update_loans_paid(self, index: int) -> None:
-        self.loans_paid[index] = 1
+        self.loans_paid[index - 1] = 1
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from rule_builder.rules import Has, Or
+from rule_builder.rules import Has, Or, HasAll
 
 if TYPE_CHECKING:
     from .world import RecettearWorld
@@ -28,7 +28,18 @@ def set_all_entrance_rules(world: RecettearWorld) -> None:
 
 
 def set_all_location_rules(world: RecettearWorld) -> None:
-    pass
+    can_pay_debt = Or(
+        Has("Progressive Finance Approval", 4),
+        HasAll(
+            "Terme Finance Approval (Week 2)",
+            "Terme Finance Approval (Week 3)",
+            "Terme Finance Approval (Week 4)",
+            "Terme Finance Approval (Week 5)"
+        )
+    )
+
+    debt_free = world.get_location("Debt Free")
+    world.set_rule(debt_free, can_pay_debt)
 
 def set_completion_condition(world: RecettearWorld) -> None:
     world.set_completion_rule(Has("Victory"))

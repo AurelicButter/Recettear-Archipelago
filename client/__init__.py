@@ -6,7 +6,8 @@ import Utils
 from typing import Any
 from CommonClient import CommonContext, gui_enabled, ClientCommandProcessor, logger, server_loop
 from .. import globals
-from .constants import ClientStatus
+from NetUtils import ClientStatus
+from .constants import RecettearStatus
 from pymem.exception import ProcessNotFound, ProcessError, PymemError, WinAPIError
 import logging
 from .MemoryManager import MemoryManager
@@ -40,6 +41,7 @@ class RecettearContext(CommonContext):
     items_handling = 0b111
     memManager: MemoryManager | None = None
     game_process: RecettearProcess | None = None
+    has_goaled = False
 
     def __init__(self, server_address: Optional[str] = None, password: Optional[str] = None) -> None:
         """
@@ -50,7 +52,7 @@ class RecettearContext(CommonContext):
         """
         super().__init__(server_address, password)
 
-        self.game_status = ClientStatus.CONNECTION_INITIAL
+        self.game_status = RecettearStatus.CONNECTION_INITIAL
         self.ap_connected = False
         self.fully_connected = False
         self.memManager = MemoryManager()
@@ -167,18 +169,18 @@ class RecettearContext(CommonContext):
 
         if disconnect:
             self.ap_connected = False
-            self.game_status = ClientStatus.CONNECTION_DISCONNECTED
+            self.game_status = RecettearStatus.CONNECTION_DISCONNECTED
         elif process_lost:
-            self.game_status = ClientStatus.CONNECTION_GAME_LOST
+            self.game_status = RecettearStatus.CONNECTION_GAME_LOST
         elif self.ap_connected and self.game_process is not None:
-            self.game_status = ClientStatus.CONNECTION_CONNECTED
+            self.game_status = RecettearStatus.CONNECTION_CONNECTED
             self.fully_connected = True
         elif self.ap_connected:
-            self.game_status = ClientStatus.CONNECTION_AP_CONNECTION
+            self.game_status = RecettearStatus.CONNECTION_AP_CONNECTION
         elif self.game_process is not None:
-            self.game_status = ClientStatus.CONNECTION_GAME_CONNECTION
+            self.game_status = RecettearStatus.CONNECTION_GAME_CONNECTION
         else:
-            self.game_status = ClientStatus.CONNECTION_GAME_LOST
+            self.game_status = RecettearStatus.CONNECTION_GAME_LOST
 
         logger.info(self.game_status)
 
@@ -186,11 +188,11 @@ class RecettearContext(CommonContext):
         try:
             self.game_process = RecettearProcess()
         except ProcessNotFound:
-            self.game_status = ClientStatus.CONNECTION_GAME_REFUSED
+            self.game_status = RecettearStatus.CONNECTION_GAME_REFUSED
             logger.info(self.game_status)
             return False
         except ProcessError as e:
-            self.game_status = ClientStatus.CONNECTION_GAME_REFUSED            
+            self.game_status = RecettearStatus.CONNECTION_GAME_REFUSED            
             logger.info(f"Unexpected error connecting to Recettear: {e}")
             return False
 
@@ -232,6 +234,14 @@ async def game_watcher(ctx: RecettearContext):
                 sleep_time = 5
             else: # Client is fully connected to server & game. Begin processing game data and monitoring.
                 location_ids = ctx.memManager.search_locations()
+
+                if -1 in location_ids:
+                    if ctx.has_goaled is False:
+                        ctx.has_goaled = True                    
+                        await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+
+                    location_ids.discard(-1)
+                
                 ctx.locations_checked.update(location_ids)
 
                 locations_checked = ctx.locations_checked.difference(ctx.checked_locations)

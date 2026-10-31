@@ -1,4 +1,5 @@
 LOCATION_NAME_TO_ID = {
+    "Debt Free": -1,
     "Paid Week 1 Debt": 1,
     "Paid Week 2 Debt": 2,
     "Paid Week 3 Debt": 3,

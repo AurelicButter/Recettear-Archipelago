@@ -111,7 +111,7 @@ class MemoryManager():
         for location_id in location_ids:
             self.__dataStore.recettear_store.update_state(location_id)
 
-    def search_locations(self) -> set[str]:
+    def search_locations(self) -> set[int]:
         """
         Function to call all watchers to search and discover new updates to prepare to send
         to the AP server

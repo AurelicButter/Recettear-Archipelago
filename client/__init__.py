@@ -235,12 +235,12 @@ async def game_watcher(ctx: RecettearContext):
             else: # Client is fully connected to server & game. Begin processing game data and monitoring.
                 location_ids = ctx.memManager.search_locations()
 
-                if -1 in location_ids:
+                if 820000 in location_ids:
                     if ctx.has_goaled is False:
                         ctx.has_goaled = True                    
                         await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
-                    location_ids.discard(-1)
+                    location_ids.discard(820000)
                 
                 ctx.locations_checked.update(location_ids)
 

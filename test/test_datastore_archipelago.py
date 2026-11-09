@@ -42,7 +42,7 @@ class TestDatastoreArchipelago(unittest.TestCase):
         store = ArchipelagoStore()
 
         results = store.get_maximum_date_unlocked()
-        self.assertTrue(results == PAYMENT_DATES[0], f"Maximum date received does not match Day {PAYMENT_DATES[0]}. Received: {results}")
+        self.assertTrue(results == 8, f"Maximum date received does not match Day 8. Received: {results}")
         
     def test_maximum_date_weeks_unlocked_calc(self) -> None:
         """
@@ -54,7 +54,20 @@ class TestDatastoreArchipelago(unittest.TestCase):
         store.update_state("Terme Finance Approval (Week 2)")
 
         results = store.get_maximum_date_unlocked()
-        self.assertTrue(results == PAYMENT_DATES[1], f"Maximum date received does not match Day {PAYMENT_DATES[1]}. Received: {results}")
+        self.assertTrue(results == 15, f"Maximum date received does not match Day 15. Received: {results}")
+
+    def test_maximum_date_progressive_weeks(self) -> None:
+        """
+        Tests the get_maximum_date_unlocked function with progressive weeks to determine if the store reports an accurate date
+        """
+
+        store = ArchipelagoStore()
+
+        store.update_state("Progressive Finance Approval")
+
+        results = store.get_maximum_date_unlocked()
+
+        self.assertTrue(results == 15, f"Maximum date received does not match Day 15. Received: {results}")
 
     def test_invalid_state_update(self) -> None:
         """

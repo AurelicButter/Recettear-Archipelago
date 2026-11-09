@@ -53,4 +53,4 @@ class ArchipelagoStore:
 
         if week_limit == -1:
             return 999 # Really large number to indicate all unlocked
-        return PAYMENT_DATES[week_limit]
+        return PAYMENT_DATES[week_limit] - 1

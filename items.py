@@ -39,7 +39,7 @@ def create_item_with_correct_classification(world: RecettearWorld, name: str) ->
 def create_all_items(world: RecettearWorld) -> None:
     itempool: list[Item] = []
 
-    if world.options.progressive_finance_approval.option_true:
+    if world.options.progressive_finance_approval:
         itempool.extend([
             world.create_item("Progressive Finance Approval"),
             world.create_item("Progressive Finance Approval"),
